@@ -174,11 +174,6 @@ export default function LoginPage() {
                 </Button>
               </CardContent>
             </form>
-            <CardFooter className="flex justify-center">
-              <p className="text-xs text-muted-foreground">
-                Demo: owner@abnetwork.com / password123
-              </p>
-            </CardFooter>
           </Card>
         </motion.div>
       </motion.div>
