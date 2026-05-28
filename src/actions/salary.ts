@@ -10,22 +10,24 @@ export async function runPayroll(year: number, month: number) {
   const results = await calculateAllSalariesForMonth(year, month);
   const startDate = new Date(year, month, 1);
 
-  for (const [userId, calc] of results.entries()) {
-    // Check if record already exists
-    const existing = await prisma.salaryRecord.findUnique({
-      where: {
-        userId_month: {
+  await prisma.$transaction(async (tx) => {
+    for (const [userId, calc] of results.entries()) {
+      await tx.salaryRecord.upsert({
+        where: {
+          userId_month: { userId, month: startDate },
+        },
+        create: {
           userId,
           month: startDate,
+          grossSalary: calc.grossSalary,
+          absentDays: calc.absentDays,
+          halfDays: calc.halfDays,
+          attendanceDeduction: calc.attendanceDeduction,
+          advanceDeduction: calc.advanceDeduction,
+          eidBonus: calc.eidBonus,
+          netPayable: calc.netPayable,
         },
-      },
-    });
-
-    if (existing) {
-      // Update existing record
-      await prisma.salaryRecord.update({
-        where: { id: existing.id },
-        data: {
+        update: {
           grossSalary: calc.grossSalary,
           absentDays: calc.absentDays,
           halfDays: calc.halfDays,
@@ -35,34 +37,18 @@ export async function runPayroll(year: number, month: number) {
           netPayable: calc.netPayable,
         },
       });
-    } else {
-      // Create new record
-      await prisma.salaryRecord.create({
-        data: {
+
+      await tx.advanceSalary.updateMany({
+        where: {
           userId,
-          month: startDate,
-          grossSalary: calc.grossSalary,
-          absentDays: calc.absentDays,
-          halfDays: calc.halfDays,
-          attendanceDeduction: calc.attendanceDeduction,
-          advanceDeduction: calc.advanceDeduction,
-          eidBonus: calc.eidBonus,
-          netPayable: calc.netPayable,
+          status: "APPROVED",
+          deductedInSalary: false,
+          requestedAt: { lte: new Date(year, month + 1, 0) },
         },
+        data: { deductedInSalary: true },
       });
     }
-
-    // Mark advances as deducted
-    await prisma.advanceSalary.updateMany({
-      where: {
-        userId,
-        status: "APPROVED",
-        deductedInSalary: false,
-        requestedAt: { lte: new Date(year, month + 1, 0) },
-      },
-      data: { deductedInSalary: true },
-    });
-  }
+  });
 }
 
 export async function getSalaryData(year: number, month: number) {
@@ -250,9 +236,9 @@ export async function getSalaryHistory() {
     paidBonusLookup.set(key, current + pb.amount);
   }
 
-  // Dynamically fetch advance deductions for records where stored value is 0
+  // Dynamically fetch advance deductions for records where no deduction was stored
   const recordsNeedingAdvances = records.filter(
-    (r) => !r.advanceDeduction || r.advanceDeduction === 0,
+    (r) => r.advanceDeduction === null || r.advanceDeduction === undefined,
   );
   const advanceLookup = new Map<string, number>();
   if (recordsNeedingAdvances.length > 0) {
@@ -277,7 +263,7 @@ export async function getSalaryHistory() {
     const paidBonusAmount = paidBonusLookup.get(monthKey) ?? 0;
 
     let advanceDeduction = record.advanceDeduction;
-    if (!advanceDeduction) {
+    if (advanceDeduction === null || advanceDeduction === undefined) {
       advanceDeduction = advanceLookup.get(monthKey) ?? 0;
     }
 
@@ -285,7 +271,7 @@ export async function getSalaryHistory() {
     if (paidBonusAmount > 0) {
       netPayable -= paidBonusAmount;
     }
-    if (!record.advanceDeduction && advanceDeduction > 0) {
+    if ((record.advanceDeduction === null || record.advanceDeduction === undefined) && advanceDeduction > 0) {
       netPayable -= advanceDeduction;
     }
 

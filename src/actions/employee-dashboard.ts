@@ -49,6 +49,14 @@ export async function getEmployeeDashboardData(userId: string) {
   });
   const leaveRemaining = user.leaveQuota - usedLeaves;
 
+  // Check if admin already processed salary for this month
+  const existingRecord = await prisma.salaryRecord.findUnique({
+    where: { userId_month: { userId, month: startOfMonth } },
+    select: { advanceDeduction: true, netPayable: true },
+  });
+  const storedAdvanceDeduction = existingRecord?.advanceDeduction ?? 0;
+  const storedNetPayable = existingRecord?.netPayable ?? null;
+
   // Get pending advance requests not yet deducted
   const advances = await prisma.advanceSalary.findMany({
     where: {
@@ -57,7 +65,8 @@ export async function getEmployeeDashboardData(userId: string) {
       deductedInSalary: false,
     },
   });
-  const totalAdvance = advances.reduce((sum, a) => sum + a.amount, 0);
+  const totalAdvance =
+    storedAdvanceDeduction + advances.reduce((sum, a) => sum + a.amount, 0);
 
   // Check for festival bonus
   // 1. First check FestivalBonusPayment — this covers both paid-separately and unpaid-processed bonuses
@@ -97,7 +106,8 @@ export async function getEmployeeDashboardData(userId: string) {
     absentDays * dailyRate + halfDays * dailyRate * 0.5;
   // Only add eidBonus to netSalary if NOT already paid separately
   const netSalary =
-    user.monthlySalary - attendanceDeduction - totalAdvance + (bonusPaidSeparately ? 0 : eidBonus);
+    storedNetPayable ??
+    (user.monthlySalary - attendanceDeduction - totalAdvance + (bonusPaidSeparately ? 0 : eidBonus));
 
   return {
     name: user.name,

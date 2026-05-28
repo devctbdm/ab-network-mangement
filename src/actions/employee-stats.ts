@@ -55,6 +55,17 @@ export async function getEmployeeStats(
   });
   const leaveRemaining = user.leaveQuota - usedLeaves;
 
+  // Check if admin already processed salary for this month
+  const existingRecord = await prisma.salaryRecord.findUnique({
+    where: { userId_month: { userId, month: startDate } },
+    select: { eidBonus: true, paid: true, paidAt: true, advanceDeduction: true, netPayable: true },
+  });
+  const eidBonus = existingRecord?.eidBonus ?? 0;
+  const salaryPaid = existingRecord?.paid ?? false;
+  const salaryPaidAt = existingRecord?.paidAt ?? null;
+  const storedAdvanceDeduction = existingRecord?.advanceDeduction ?? 0;
+  const storedNetPayable = existingRecord?.netPayable ?? null;
+
   // Approved advances (not yet deducted)
   const advances = await prisma.advanceSalary.findMany({
     where: {
@@ -65,16 +76,8 @@ export async function getEmployeeStats(
     },
     select: { amount: true, reason: true, requestedAt: true, status: true },
   });
-  const totalAdvance = advances.reduce((sum, a) => sum + a.amount, 0);
-
-  // Check if admin already processed a festival bonus for this month
-  const existingRecord = await prisma.salaryRecord.findUnique({
-    where: { userId_month: { userId, month: startDate } },
-    select: { eidBonus: true, paid: true, paidAt: true },
-  });
-  const eidBonus = existingRecord?.eidBonus ?? 0;
-  const salaryPaid = existingRecord?.paid ?? false;
-  const salaryPaidAt = existingRecord?.paidAt ?? null;
+  const totalAdvance =
+    storedAdvanceDeduction + advances.reduce((sum, a) => sum + a.amount, 0);
 
   // Check festival bonus payment status
   const thisMonth = new Date(targetYear, targetMonth, 1);
@@ -96,7 +99,7 @@ export async function getEmployeeStats(
   const attendanceDeduction =
     absentDays * dailyRate + halfDays * dailyRate * 0.5;
   const netSalary =
-    user.monthlySalary - attendanceDeduction - totalAdvance + eidBonus;
+    storedNetPayable ?? (user.monthlySalary - attendanceDeduction - totalAdvance + eidBonus);
 
   // Recent salary history (last 3 months)
   const salaryHistory = await prisma.salaryRecord.findMany({
