@@ -50,7 +50,13 @@ interface StatsData {
   salaryPaidAt: Date | null;
   attendanceDeduction: number;
   netSalary: number;
-  salaryHistory: Array<{ month: string; netPayable: number; eidBonus: number; paid: boolean; paidAt: Date | string | null }>;
+  salaryHistory: Array<{
+    month: string;
+    netPayable: number;
+    eidBonus: number;
+    paid: boolean;
+    paidAt: Date | string | null;
+  }>;
   year: number;
   month: number;
 }
@@ -130,7 +136,9 @@ export function EmployeeStatsClient({
                   </div>
                   {data.eidBonus > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>{data.eidBonusFestivalName || "Festival"} Bonus</span>
+                      <span>
+                        {data.eidBonusFestivalName || "Festival"} Bonus
+                      </span>
                       <span>+{formatCurrency(data.eidBonus)}</span>
                     </div>
                   )}
@@ -176,7 +184,9 @@ export function EmployeeStatsClient({
                         <>
                           <Clock className="h-8 w-8 text-yellow-600" />
                           <div>
-                            <p className="font-medium text-yellow-600">Pending</p>
+                            <p className="font-medium text-yellow-600">
+                              Pending
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               Awaiting payment
                             </p>
@@ -214,7 +224,9 @@ export function EmployeeStatsClient({
                           <>
                             <Clock className="h-8 w-8 text-yellow-600" />
                             <div>
-                              <p className="font-medium text-yellow-600">Pending</p>
+                              <p className="font-medium text-yellow-600">
+                                Pending
+                              </p>
                               <p className="text-xs text-muted-foreground">
                                 Added to salary, awaiting disbursement
                               </p>
@@ -282,7 +294,10 @@ export function EmployeeStatsClient({
                               Paid
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                            <Badge
+                              variant="outline"
+                              className="bg-yellow-50 text-yellow-700"
+                            >
                               Pending
                             </Badge>
                           )}
@@ -343,7 +358,9 @@ export function EmployeeStatsClient({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>{data.eidBonusFestivalName || "Festival"} Bonus</CardTitle>
+                  <CardTitle>
+                    {data.eidBonusFestivalName || "Festival"} Bonus
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -359,10 +376,15 @@ export function EmployeeStatsClient({
                           Status:{" "}
                           {data.eidBonusPaid ? (
                             <span className="text-green-600 font-medium">
-                              Paid {data.eidBonusPaidAt ? `on ${format(new Date(data.eidBonusPaidAt), "MMM dd")}` : ""}
+                              Paid{" "}
+                              {data.eidBonusPaidAt
+                                ? `on ${format(new Date(data.eidBonusPaidAt), "MMM dd")}`
+                                : ""}
                             </span>
                           ) : (
-                            <span className="text-yellow-600 font-medium">Pending</span>
+                            <span className="text-yellow-600 font-medium">
+                              Pending
+                            </span>
                           )}
                         </p>
                       )}
@@ -394,7 +416,9 @@ export function EmployeeStatsClient({
                         className="flex justify-between items-center border-b pb-2"
                       >
                         <div>
-                          <p className="font-medium">₹{adv.amount}</p>
+                          <p className="font-medium">
+                            {formatCurrency(adv.amount)}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {adv.reason || "No reason"}
                             <br />
