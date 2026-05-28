@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Gift, CheckCircle2, Clock, Banknote } from "lucide-react";
+import { Gift, CheckCircle2, Clock, Banknote, CalendarCheck, CalendarX, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/constants";
 
@@ -105,8 +105,8 @@ export function EmployeeStatsClient({
       </motion.div>
 
       <Tabs defaultValue="salary">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="salary">Salary Details</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-3">
+          <TabsTrigger value="salary">Salary</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="advances">Advances & Leave</TabsTrigger>
         </TabsList>
@@ -314,85 +314,63 @@ export function EmployeeStatsClient({
         {/* Attendance Tab */}
         <TabsContent value="attendance">
           <motion.div variants={staggerContainer} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>This Month's Attendance</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Present</CardTitle>
+                  <CalendarCheck className="h-4 w-4 text-green-600" />
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {data.presentDays}
-                      </div>
-                      <div className="text-xs">Present</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {data.halfDays}
-                      </div>
-                      <div className="text-xs">Half Days</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">
-                        {data.absentDays}
-                      </div>
-                      <div className="text-xs">Absent</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {data.daysInMonth}
-                      </div>
-                      <div className="text-xs">Days in Month</div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Attendance Rate</span>
-                      <span>{attendanceRate.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={attendanceRate} className="h-2" />
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {data.presentDays}
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {data.eidBonusFestivalName || "Festival"} Bonus
-                  </CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Half Days</CardTitle>
+                  <Clock className="h-4 w-4 text-yellow-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-3">
-                    <Gift className="h-8 w-8 text-green-600" />
-                    <div>
-                      <p className="font-medium">
-                        {data.eidBonus > 0
-                          ? `Bonus: ${formatCurrency(data.eidBonus)}`
-                          : "No bonus this month"}
-                      </p>
-                      {data.eidBonus > 0 && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Status:{" "}
-                          {data.eidBonusPaid ? (
-                            <span className="text-green-600 font-medium">
-                              Paid{" "}
-                              {data.eidBonusPaidAt
-                                ? `on ${format(new Date(data.eidBonusPaidAt), "MMM dd")}`
-                                : ""}
-                            </span>
-                          ) : (
-                            <span className="text-yellow-600 font-medium">
-                              Pending
-                            </span>
-                          )}
-                        </p>
-                      )}
-                    </div>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {data.halfDays}
                   </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Absent</CardTitle>
+                  <CalendarX className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">
+                    {data.absentDays}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Days/Month</CardTitle>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{data.daysInMonth}</div>
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Attendance Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">This month</span>
+                  <span className="font-semibold">{attendanceRate.toFixed(1)}%</span>
+                </div>
+                <Progress value={attendanceRate} className="h-2" />
+              </CardContent>
+            </Card>
           </motion.div>
         </TabsContent>
 
